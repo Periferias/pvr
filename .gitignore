@@ -12,7 +12,6 @@
 /node_modules/
 /cypress/screenshots/
 /cypress/downloads/
-package-lock.json
 ###< symfony/framework-bundle ###
 
 ###> envinronment customization ###

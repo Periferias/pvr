@@ -8,6 +8,8 @@
         "ext-ctype": "*",
         "ext-fileinfo": "*",
         "ext-iconv": "*",
+        "ext-mongodb": "*",
+        "ext-sodium": "*",
         "doctrine/dbal": "^3",
         "doctrine/doctrine-bundle": "^2.12",
         "doctrine/doctrine-migrations-bundle": "^3.3",
@@ -76,7 +78,7 @@
             "assets:install %PUBLIC_DIR%": "symfony-cmd",
             "importmap:install": "symfony-cmd"
         },
-        "post-install-cmd": [
+        "post-start-cmd": [
             "@auto-scripts"
         ],
         "post-update-cmd": [
@@ -98,7 +100,7 @@
         "doctrine/doctrine-fixtures-bundle": "^3.6",
         "friendsofphp/php-cs-fixer": "^3.62",
         "phpunit/php-code-coverage": "^12.0",
-        "phpunit/phpunit": "^12.0",
+        "phpunit/phpunit": "^12",
         "squizlabs/php_codesniffer": "*",
         "symfony/browser-kit": "7.2.*",
         "symfony/css-selector": "7.2.*",
