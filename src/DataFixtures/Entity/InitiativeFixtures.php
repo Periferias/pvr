@@ -278,17 +278,16 @@ final class InitiativeFixtures extends AbstractFixture implements DependentFixtu
         $counter = 0;
 
         foreach (self::INITIATIVES as $initiativeData) {
-            if (5 > $counter) {
-                $file = $this->fileService->uploadImage($this->parameterBag->get('app.dir.initiative.profile'), ImageFixtures::getInitiativeImage());
-                $initiativeData['image'] = $file;
-            }
+            // if (5 > $counter) {
+            //     $file = $this->fileService->uploadImage($this->parameterBag->get('app.dir.initiative.profile'), ImageFixtures::getInitiativeImage());
+            //     $initiativeData['image'] = $file;
+            // }
 
             $initiative = $this->mountInitiative($initiativeData);
 
             $this->setReference(sprintf('%s-%s', self::INITIATIVE_ID_PREFIX, $initiativeData['id']), $initiative);
 
             $this->manualLoginByAgent($initiativeData['createdBy']);
-
             $manager->persist($initiative);
             $counter++;
         }
