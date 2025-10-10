@@ -82,21 +82,24 @@ class ProposalAdminController extends AbstractAdminController
         $proposals = array_map(function (Initiative $initiative) use ($env) {
             $organization = $initiative->getOrganizationFrom();
             $extraFields = $initiative->getExtraFields();
+            $areaCharacteristic = $extraFields['area_characteristic'] ?? null;
+
+            $quantityHouses = (int) ($extraFields['quantity_houses'] ?? 0);
 
             return [
                 'id' => $initiative->getId()->toRfc4122(),
                 'name' => $initiative->getName(),
-                'company' => $organization->getName(),
+                'company' => $organization?->getName() ?? '',
                 'city_name' => $extraFields['city_name'] ?? '',
                 'region' => $extraFields['region'] ?? '',
                 'state' => $extraFields['state'] ?? '',
                 'status' => $extraFields['status'] ?? '',
-                'quantity_houses' => $extraFields['quantity_houses'] ?? '',
+                'quantity_houses' => $quantityHouses,
                 'area_size' => $extraFields['area_size'] ?? '',
                 'created_at' => $initiative->getCreatedAt()->format('d/m/Y'),
-                'created_by' => $initiative->getCreatedBy()->getName(),
-                'area_option' => $env['proposals']['area_characteristics'][$extraFields['area_characteristic']] ?? '',
-                'price_per_house' => $env['variables']['price_per_household'] ?? 1,
+                'created_by' => $initiative->getCreatedBy()?->getName() ?? '',
+                'area_option' => null !== $areaCharacteristic ? ($env['proposals']['area_characteristics'][$areaCharacteristic] ?? '') : '',
+                'price_per_house' => (float) ($env['variables']['price_per_household'] ?? 1),
                 'map_file' => $extraFields['map_file'] ?? '',
                 'project_file' => $extraFields['project_file'] ?? '',
                 'anticipation' => $extraFields['anticipation'] ?? '',
@@ -109,7 +112,7 @@ class ProposalAdminController extends AbstractAdminController
             'statuses' => $statuses,
             'states' => $states,
             'cities' => $cities,
-            'anticipation' => $extraFields['anticipation'] ?? '',
+            'anticipation' => $anticipation ?? '',
             'anticipationOption' => $anticipationOptions,
         ], parentPath: '');
     }
