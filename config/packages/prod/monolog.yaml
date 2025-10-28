@@ -1,6 +1,6 @@
 monolog:
     handlers:
-        # Send debug..notice to stdout
+        # Send debug..notice to stderr (avoid contaminating HTTP response)
         stdout_filter:
             type: filter
             min_level: debug
@@ -8,7 +8,7 @@ monolog:
             handler: stdout
         stdout:
             type: stream
-            path: 'php://stdout'
+            path: 'php://stderr'
             level: debug
             bubble: false
 
@@ -20,14 +20,11 @@ monolog:
             bubble: false
 
         # Disable file-specific handlers in prod to avoid duplicates
-        debug_log:
-            type: null
-        info_log:
-            type: null
-        errors_4xx:
-            type: null
-        errors_5xx:
-            type: null
+        debug_log: null
+        info_log: null
+        errors_4xx: null
+        errors_5xx: null
+        main: null
 
         # Ensure CLI (bin/console) outputs to the terminal
         console:
