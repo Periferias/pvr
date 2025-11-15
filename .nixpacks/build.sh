@@ -1,0 +1,1 @@
+docker build . -f ./.nixpacks/Dockerfile -t 7e49b290-7c67-4632-b0f1-eb27a76182e2 --build-arg NIXPACKS_METADATA=php --build-arg PORT=80
