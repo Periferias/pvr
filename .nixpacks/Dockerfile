@@ -17,13 +17,15 @@ ENV NIXPACKS_METADATA=$NIXPACKS_METADATA PORT=$PORT
 # install phase
 COPY *.json /app/
 COPY *.lock /app/
-RUN  mkdir -p /var/log/nginx && mkdir -p /var/cache/nginx
+RUN  mkdir -p /app/var/cache /app/var/log /app/var/run /app/storage /app/config/jwt /app/var/nginx
 RUN  composer install --ignore-platform-reqs
 RUN  npm ci
 
 # build phase
 # detalhas melhor quais pastas devem ser copiadas
 COPY . /app/.
+# Transform the nginx configuration
+RUN node /assets/scripts/prestart.mjs /assets/nginx.template.conf /etc/nginx.conf
 RUN  mkdir -p /etc/supervisor/conf.d/
 RUN  cp /assets/worker-*.conf /etc/supervisor/conf.d/
 RUN  cp /assets/supervisord.conf /etc/supervisord.conf
@@ -35,6 +37,7 @@ RUN  chmod +x /assets/start.sh
 
 # start
 COPY . /app
+RUN chown -R www-data:www-data /app
 
+USER www-data
 CMD ["/assets/start.sh"]
-

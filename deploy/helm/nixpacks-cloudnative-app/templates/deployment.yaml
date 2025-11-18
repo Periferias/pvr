@@ -37,13 +37,11 @@ spec:
               {{- if $pp }}
               mkdir -p '{{ $pp }}' || true;
               chmod -R 0777 '{{ $pp }}' || true;
-              touch /var/log/supervisord.log || true;
-              chmod 0666 /var/log/supervisord.log || true;
               {{- end }}
               {{- end }}
+              touch /app/var/log/supervisord.log || true;
+              chmod 0666 /app/var/log/supervisord.log || true;
           volumeMounts:
-            - name: var
-              mountPath: /var
             - name: app-var
               mountPath: /app/var
             - name: app-storage

@@ -183,3 +183,100 @@ Há um fork do Bootstrap (framework css) com a implementação dos protótipos a
 Alguns protótipos implementados não estão seguindo a risca o design sugerido, por decisões totalmente técnicas que estão [documentadas aqui](https://github.com/secultce/aurora-ui/blob/main/help/design-decisions.md)
 </details>
 
+## Kubernetes: kubectl, Helm e Skaffold
+<details>
+<summary>Passo a passo de deploy</summary>
+
+### Pré‑requisitos
+- `Docker` e acesso a um registry (ou cluster local que aceite imagens locais).
+- `kubectl` apontando para um cluster ativo (Kind, Minikube, K3d, ou cloud).
+- `Helm` 3.12+.
+- `Skaffold` v2+.
+
+Estruturas relevantes no repositório:
+- Chart Helm: `deploy/helm/nixpacks-cloudnative-app`.
+- Skaffold: `skaffold.yaml` (usa `.nixpacks/Dockerfile`).
+
+### Opção A) Skaffold (mais simples)
+O Skaffold constrói a imagem e faz o deploy com Helm automaticamente.
+
+1. Escolha um perfil de cluster:
+   - Kind: `skaffold dev -p kind`
+   - Minikube: `skaffold dev -p minikube`
+   - Padrão (outros clusters): `skaffold dev`
+   - Sem dependências (usa DB externos e desliga subcharts): `skaffold dev -p no-deps`
+
+2. Acompanhe os logs. Quando pronto, acesse:
+   - Perfis padrão/kind: `http://localhost:8080` (Skaffold faz `port-forward`).
+   - Minikube: `minikube service mcm-nixpacks-cloudnative-app -n mcm` (perfil já troca o Service para `NodePort`).
+
+Observações:
+- A imagem é construída via Dockerfile em `.nixpacks/Dockerfile`.
+- As variáveis de ambiente do app podem ser ajustadas em `deploy/helm/nixpacks-cloudnative-app/values.yaml` (seções `config` e `secrets`).
+- Dependências gerenciadas via Bitnami charts: PostgreSQL, MongoDB e Mailpit (SMTP). O chart já inclui um template do Mailpit (sem dependência externa).
+- Se o cluster não consegue puxar imagens externas (Bitnami deps), use o perfil `no-deps` e forneça `DATABASE_URL`, `MONGODB_URL` e `MONGODB_DB`.
+
+### Opção B) Helm puro (sem Skaffold)
+Use quando você já possui a imagem publicada em um registry acessível ao cluster.
+
+1. Construa e publique a imagem:
+```bash
+docker build -t <REGISTRY>/mcm-app:<TAG> -f .nixpacks/Dockerfile .
+docker push <REGISTRY>/mcm-app:<TAG>
+```
+
+2. Crie o namespace (se ainda não existir):
+```bash
+kubectl create namespace mcm || true
+```
+
+3. Faça o deploy com Helm:
+```bash
+helm upgrade --install mcm deploy/helm/nixpacks-cloudnative-app \
+  -n mcm \
+  --set image.repository=<REGISTRY>/mcm-app \
+  --set image.tag=<TAG>
+```
+
+4. Exponha a aplicação:
+   - Via port-forward (qualquer cluster):
+```bash
+kubectl -n mcm port-forward svc/mcm-nixpacks-cloudnative-app 8080:80
+```
+   - Ou em Minikube como NodePort:
+```bash
+helm upgrade --install mcm deploy/helm/nixpacks-cloudnative-app -n mcm \
+  --set image.repository=<REGISTRY>/mcm-app --set image.tag=<TAG> \
+  --set service.type=NodePort
+minikube service mcm-nixpacks-cloudnative-app -n mcm
+```
+
+5. Acesse `http://localhost:8080` (port-forward) ou a URL retornada pelo Minikube.
+
+Configuração de ambiente:
+- Edite `deploy/helm/nixpacks-cloudnative-app/values.yaml`:
+  - `config`: variáveis não sensíveis (ex.: `APP_ENV`, `PORT`, `STORAGE_*`, `EMAIL_ADDRESS`, etc.).
+  - `secrets`: variáveis sensíveis (ex.: `APP_SECRET`, `JWT_PASSPHRASE`).
+- Se não informar `DATABASE_URL`, `MONGODB_URL` e `MONGODB_DB`, o chart calcula automaticamente quando `postgresql.enabled`/`mongodb.enabled` estiverem `true`.
+- Mailpit opcional: habilite `mailpit.enabled: true` para ter SMTP interno de desenvolvimento.
+
+### Opção C) kubectl aplicando manifests renderizados
+Gere os manifests com Helm e aplique com kubectl (útil para CI):
+```bash
+kubectl create namespace mcm || true
+helm template mcm deploy/helm/nixpacks-cloudnative-app \
+  -n mcm \
+  --set image.repository=<REGISTRY>/mcm-app \
+  --set image.tag=<TAG> | kubectl apply -n mcm -f -
+
+kubectl -n mcm rollout status deploy/mcm-nixpacks-cloudnative-app
+kubectl -n mcm port-forward svc/mcm-nixpacks-cloudnative-app 8080:80
+```
+
+### Dicas e troubleshooting
+- Ver logs do app: `kubectl -n mcm logs -l app.kubernetes.io/name=nixpacks-cloudnative-app -f`.
+- Ver pods/serviços: `kubectl -n mcm get pods,svc`.
+- Ajuste recursos em `values.yaml` (`resources.requests/limits`).
+- Em ambientes gerenciados, desabilite subcharts (`postgresql.enabled=false`, `mongodb.enabled=false`) e configure `DATABASE_URL`/`MONGODB_*` apontando para serviços externos.
+
+</details>

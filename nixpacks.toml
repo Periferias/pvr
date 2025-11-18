@@ -24,8 +24,8 @@ node /assets/scripts/prestart.mjs /assets/nginx.template.conf /etc/nginx.conf
 cd /app || exit 1
 
 echo "[startup] Preparing writable directories..."
-mkdir -p /app/var/cache /app/var/log /app/storage /app/config/jwt /tmp /var/tmp /var/log/nginx /var/cache/nginx || true
-chmod -R ugo+rw /app/var /app/storage /app/config/jwt /tmp /var/tmp /var/log /var/cache/nginx || true
+mkdir -p /app/var/cache /app/var/log /app/var/run /app/storage /app/config/jwt || true
+chmod -R ugo+rw /app/var /app/storage /app/config/jwt || true
 
 echo "[startup] Generating JWT keypair (idempotent)..."
 php bin/console lexik:jwt:generate-keypair --overwrite -n || echo "[warn] JWT keypair generation failed"
@@ -45,14 +45,14 @@ supervisord -c /etc/supervisord.conf -n
 
 "supervisord.conf" = '''
 [unix_http_server]
-file=/assets/supervisor.sock
+file=/app/var/run/supervisor.sock
 
 [supervisord]
-logfile=/var/log/supervisord.log
+logfile=/app/var/log/supervisord.log
 logfile_maxbytes=50MB
 logfile_backups=10
 loglevel=info
-pidfile=/assets/supervisord.pid
+pidfile=/app/var/run/supervisord.pid
 nodaemon=false
 silent=false
 minfds=1024
@@ -62,7 +62,7 @@ minprocs=200
 supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 
 [supervisorctl]
-serverurl=unix:///assets/supervisor.sock
+serverurl=unix:///app/var/run/supervisor.sock
 
 [include]
 files = /etc/supervisor/conf.d/*.conf
@@ -74,8 +74,8 @@ process_name=%(program_name)s_%(process_num)02d
 command=nginx -c /etc/nginx.conf
 autostart=true
 autorestart=true
-stdout_logfile=/var/log/worker-nginx.log
-stderr_logfile=/var/log/worker-nginx.log
+stdout_logfile=/app/var/log/worker-nginx.log
+stderr_logfile=/app/var/log/worker-nginx.log
 '''
 
 "worker-phpfpm.conf" = '''
@@ -84,11 +84,13 @@ process_name=%(program_name)s_%(process_num)02d
 command=php-fpm -y /assets/php-fpm.conf -F
 autostart=true
 autorestart=true
-stdout_logfile=/var/log/worker-phpfpm.log
-stderr_logfile=/var/log/worker-phpfpm.log
+stdout_logfile=/app/var/log/worker-phpfpm.log
+stderr_logfile=/app/var/log/worker-phpfpm.log
 '''
 
 "php-fpm.conf" = '''
+error_log = /proc/self/fd/2
+
 [www]
 listen = 127.0.0.1:9000
 user = www-data
@@ -101,6 +103,8 @@ pm.min_spare_servers = 4
 pm.max_spare_servers = 32
 pm.start_servers = 18
 clear_env = no
+catch_workers_output = yes
+php_admin_value[error_log] = /proc/self/fd/2
 php_admin_value[post_max_size] = 35M
 php_admin_value[upload_max_filesize] = 30M
 '''
@@ -124,8 +128,8 @@ http {
     log_format   main '$remote_addr - $remote_user [$time_local]  $status '
         '"$request" $body_bytes_sent "$http_referer" '
         '"$http_user_agent" "$http_x_forwarded_for"';
-    access_log /var/log/nginx-access.log;
-    error_log /var/log/nginx-error.log;
+    access_log /app/var/log/nginx-access.log;
+    error_log /app/var/log/nginx-error.log;
     sendfile     on;
     tcp_nopush   on;
     server_names_hash_bucket_size 128; # this seems to be required for some vhosts
