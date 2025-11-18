@@ -1,0 +1,28 @@
+apiVersion: v2
+name: nixpacks-cloudnative-app
+description: A cloud-native Nixpacks-based application Helm chart
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
+keywords:
+  - nixpacks
+  - cloud-native
+  - web
+  - api
+home: https://example.com
+sources:
+  - https://github.com/your-org/your-app
+maintainers:
+  - name: Your Name
+    email: you@example.com
+
+dependencies:
+  - name: postgresql
+    version: 15.5.17
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: mongodb
+    version: 15.6.2
+    repository: https://charts.bitnami.com/bitnami
+    condition: mongodb.enabled

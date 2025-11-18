@@ -15,7 +15,8 @@ ENV NIXPACKS_METADATA=$NIXPACKS_METADATA PORT=$PORT
 # noop
 
 # install phase
-COPY . /app/.
+COPY *.json /app/
+COPY *.lock /app/
 RUN  mkdir -p /var/log/nginx && mkdir -p /var/cache/nginx
 RUN  composer install --ignore-platform-reqs
 RUN  npm ci

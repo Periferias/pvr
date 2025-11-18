@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nixpacks-cloudnative-app.fullname" . }}-config
+  labels:
+    {{- include "nixpacks-cloudnative-app.labels" . | nindent 4 }}
+data:
+  {{- if .Values.config }}
+  {{- range $key, $value := .Values.config }}
+  {{ $key }}: {{ $value | squote }}
+  {{- end }}
+  {{- end }}
+
+  # Compute MONGODB_DB if not provided (non-sensitive)
+  {{- $mongoDbProvided := and .Values.config (hasKey .Values.config "MONGODB_DB") }}
+  {{- if and (not $mongoDbProvided) .Values.mongodb.enabled }}
+  MONGODB_DB: "{{ index .Values.mongodb.auth.databases 0 }}"
+  {{- end }}

@@ -1,0 +1,225 @@
+# ---- App metadata ----
+nameOverride: ""
+fullnameOverride: ""
+
+# ---- Nixpacks image ----
+image:
+  # repository: 298680963177.dkr.ecr.us-east-1.amazonaws.com/melhorias-habitacionais
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: regcred
+
+# ---- Replica & autoscaling ----
+replicaCount: 2
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 75
+  # targetMemoryUtilizationPercentage: 80
+
+# ---- Pod resources (cloud-native sane defaults) ----
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+# ---- Pod configs ----
+podAnnotations: {}
+podLabels: {}
+
+# podSecurityContext:
+#   runAsNonRoot: true
+#   # Run as www-data (33) to avoid privilege drops and root needs
+#   runAsUser: 33
+#   runAsGroup: 33
+#   fsGroup: 33
+
+# securityContext:
+#   allowPrivilegeEscalation: false
+#   readOnlyRootFilesystem: false
+#   capabilities:
+#     drop:
+#       - ALL
+
+# ---- Service ----
+service:
+  type: ClusterIP
+  port: 80
+  # Porta interna do container (Nixpacks costuma expor 3000/8080/5000 etc.)
+  targetPort: 80
+
+# ---- Ingress (traefik/nginx) ----
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  #   kubernetes.io/ingress.class: traefik
+  #   cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: app.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - hosts:
+  #      - app.local
+  #    secretName: app-tls
+
+# ---- Environment (12-factor style) ----
+
+env: []
+  # - name: NODE_ENV
+  #   value: "production"
+  # - name: LOG_LEVEL
+  #   value: "info"
+
+envFromConfigMap: true
+envFromSecret: true
+
+config:
+  # Configurações não sensíveis => ConfigMap
+  APP_NAME: "nixpacks-app"
+  APP_ENV: "production"
+  # Porta exposta pelo Nginx dentro do container
+  PORT: "80"
+  # Variáveis esperadas pela aplicação Symfony (não sensíveis)
+  JWT_SECRET_KEY: "/app/config/jwt/private.pem"
+  JWT_PUBLIC_KEY: "/app/config/jwt/public.pem"
+  STORAGE_DIR: "/app/storage"
+  STORAGE_BASE_URL: "http://localhost/storage"
+  STORAGE_IMAGES_DIR: "/app/assets/uploads"
+  STORAGE_IMAGES_BASE_URL: "http://localhost/assets/uploads"
+  CORS_ALLOW_ORIGIN: "^https?://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?$"
+  EMAIL_ADDRESS: "no-reply@regmel.com"
+  MAX_FILE_SIZE_MB: "5"
+  # Opcional para testes E2E locais
+  CYPRESS_BASE_URL: "http://localhost/"
+
+
+  # Observações:
+  # - DATABASE_URL, MONGODB_URL e MONGODB_DB são calculadas automaticamente abaixo
+  #   quando os charts dependentes (postgresql/mongodb) estão habilitados.
+  #   Informe-os aqui apenas se quiser sobrescrever os valores padrão.
+
+secrets:
+  # Valores sensíveis => Secret (base64 será gerado pelo Helm)
+  # Se necessário, descomente e defina DATABASE_URL abaixo para ignorar o cálculo automático.
+  # DATABASE_URL: "postgresql://user:pass@host:5432/db?serverVersion=16&charset=utf8"
+  APP_SECRET: "mcm"
+  JWT_PASSPHRASE: "mcm2222"
+  # Valores sensíveis => Secret (base64 será gerado pelo Helm)
+  # DB_PASSWORD: "supersecret"
+
+# ---- Liveness / Readiness para apps web/API ----
+livenessProbe:
+  enabled: true
+  path: /
+  initialDelaySeconds: 20
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 6
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  path: /
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 6
+  successThreshold: 1
+
+# ---- Extra volumes (p.ex. CA certs, etc) ----
+extraVolumes:
+  # Generic writable /var
+  - name: var
+    emptyDir: {}
+  # Writable Symfony/runtime dirs under /app
+  - name: app-var
+    emptyDir: {}
+  - name: app-storage
+    emptyDir: {}
+  - name: app-jwt
+    emptyDir: {}
+  - name: app-assets-uploads
+    emptyDir: {}
+extraVolumeMounts:
+  - name: var
+    mountPath: /var
+  - name: app-var
+    mountPath: /app/var
+  - name: app-storage
+    mountPath: /app/storage
+  - name: app-jwt
+    mountPath: /app/config/jwt
+  - name: app-assets-uploads
+    mountPath: /app/assets/uploads
+
+# ---- Init container to prepare writable dirs ----
+prepareWritableDirs:
+  enabled: true
+  paths:
+    - /app/var/cache
+    - /app/var/log
+    - /var/log
+    - /app/var/translations
+    - /app/var/nginx
+    - /app/storage
+    - /app/config/jwt
+    - /app/assets/uploads
+    # Common runtime dirs for nginx/php-fpm
+    - /var/run
+    - /var/run/nginx
+    - /var/log/nginx
+    - /var/lib/nginx
+    - /run/php
+    - /var/log/php
+    - /var/log/php-fpm
+
+# ---- Node affinity / tolerations ----
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# ---- Built-in dependencies ----
+postgresql:
+  enabled: true
+  image:
+    # Use Bitnami legacy images on Docker Hub
+    registry: docker.io
+    repository: bitnamilegacy/postgresql
+  auth:
+    username: regmel
+    password: password
+    database: regmel_psql
+  primary:
+    persistence:
+      enabled: false
+
+mongodb:
+  enabled: true
+  image:
+    # Use Bitnami legacy images on Docker Hub
+    registry: docker.io
+    repository: bitnamilegacy/mongodb
+  auth:
+    enabled: true
+    rootUser: root
+    rootPassword: password
+    usernames:
+      - regmel
+    passwords:
+      - password
+    databases:
+      - regmel_nosql
+  persistence:
+    enabled: false
+
+## Mailpit removido — não utilizado neste chart

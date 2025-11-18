@@ -1,0 +1,73 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: mcm-nixpacks
+build:
+  artifacts:
+    - image: 298680963177.dkr.ecr.us-east-1.amazonaws.com/melhorias-habitacionais
+      context: .
+      docker:
+        dockerfile: .nixpacks/Dockerfile
+  local:
+    useDockerCLI: false
+    useBuildkit: false
+
+manifests:
+  helm:
+    releases:
+      - name: mcm
+        chartPath: deploy/helm/nixpacks-cloudnative-app
+        namespace: mcm
+        createNamespace: true
+        skipBuildDependencies: true
+        valuesFiles:
+          - deploy/helm/nixpacks-cloudnative-app/values.yaml
+        # setValueTemplates:
+        #   image.repository: "{{.IMAGE_REPO_mcm_app}}"
+        #   image.tag: "{{.IMAGE_TAG_mcm_app}}"
+portForward:
+  - resourceType: service
+    resourceName: mcm-nixpacks-cloudnative-app
+    namespace: mcm
+    port: 80
+    localPort: 8080
+profiles:
+  - name: dev
+    patches:
+      - op: replace
+        path: /build/local/push
+        value: false
+  - name: no-deps
+    # Disable DB/Mail dependencies (use external services via env)
+    patches:
+      - op: add
+        path: /manifests/helm/releases/0/setValues
+        value:
+          postgresql:
+            enabled: false
+          mongodb:
+            enabled: false
+          mailpit:
+            enabled: false
+  - name: kind
+    # For KinD, Skaffold will load images into the cluster automatically.
+    patches: []
+  - name: minikube
+    patches:
+      # Set Service to NodePort for direct access via `minikube service`
+      - op: add
+        path: /manifests/helm/releases/0/setValues
+        value:
+          service:
+            type: NodePort
+          ingress:
+            enabled: false
+      # Disable port-forwarding; use `minikube service` instead
+      - op: remove
+        path: /portForward
+  - name: deps
+    # Build Helm dependencies (requires network access)
+    patches:
+      - op: replace
+        path: /manifests/helm/releases/0/skipBuildDependencies
+        value: false
