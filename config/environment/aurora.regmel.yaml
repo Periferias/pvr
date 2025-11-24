@@ -1,4 +1,4 @@
-name: Minha Casa Melhor
+name: Periferia Viva - Reformas
 author: Secretaria Nacional de Periferias
 
 email:
@@ -37,7 +37,7 @@ terms:
     text: >
       Em atendimento à <strong>Lei Geral de Proteção de Dados Pessoais – LGPD (Lei no
       13.709/2018)</strong>, declaro estar ciente de que os dados fornecidos durante o processo de
-      cadastro e submissão de propostas na plataforma Minha Casa Melhor serão:<br><br>
+      cadastro e submissão de propostas na plataforma Periferia Viva - Reformas serão:<br><br>
       <ul>
       <li>Coletados, tratados e armazenados pela Secretaria Nacional de Periferias.</li>
       <li>Utilizados exclusivamente para fins de gestão do edital, análise das propostas,</li>
@@ -54,7 +54,7 @@ terms:
       Autorizo, de forma livre, informada e inequívoca, a <strong>Secretaria Nacional de Periferias
       (SNP)</strong>, vinculada ao <strong>Ministério das Cidades</strong>, a utilizar, reproduzir e divulgar, para fins
       institucionais, as imagens, vídeos, áudios e materiais gráficos enviados durante o
-      processo de seleção do programa Minha Casa Melhor.
+      processo de seleção do programa Periferia Viva - Reformas.
       <br><br>
       <strong>Essa autorização é válida para:</strong>
       <ul>
@@ -64,11 +64,10 @@ terms:
       A presente autorização é concedida sem limitação temporal e sem qualquer ônus,
       podendo ser revogada a qualquer tempo mediante solicitação formal.
   privacy_policy:
-    title: Termos de Uso e Política de Privacidade – Plataforma de Seleção Minha Casa Melhor
+    title: Termos de Uso e Política de Privacidade – Plataforma de Seleção Periferia Viva - Reformas
     text: >
       <p><span class="fw-bold">1.1. Finalidade</span><br>
-      A plataforma é destinada à seleção de propostas no âmbito do programa Minha Casa
-      Melhor, coordenado pela Secretaria Nacional de Periferias (SNP). Ao realizar o cadastro,
+      A plataforma é destinada à seleção de propostas no âmbito do programa Periferia Viva - Reformas, coordenado pela Secretaria Nacional de Periferias (SNP). Ao realizar o cadastro,
       o usuário declara ciência e concordância com os termos aqui estabelecidos.
       </p>
       
@@ -104,7 +103,7 @@ terms:
       </p>
       
       <p><span class="fw-bold">1.6. Aceite</span>
-      Li e aceito os Termos de Uso e a Política de Privacidade da plataforma Minha Casa Melhor.
+      Li e aceito os Termos de Uso e a Política de Privacidade da plataforma Periferia Viva - Reformas.
       </p>
 modules:
   organizations: Municípios
@@ -278,7 +277,7 @@ homepage:
   sections:
     header:
       enabled: false
-      title: Minha Casa Melhor
+      title: Periferia Viva - Reformas
       subtitle: subtitulo aqui
       action:
         route: regmel_about
