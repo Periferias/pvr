@@ -288,7 +288,7 @@ homepage:
       image_width: 70%
     banner:
       enabled: true
-      image: /img/regmel/minha-casa-melhor-banner.svg
+      image: /img/regmel/banner-digital-reformas.png
     register:
       enabled: true
       color: "#1c8230"
