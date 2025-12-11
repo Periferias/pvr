@@ -119,11 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     citySelect.refreshOptions(false);
 
-    // Manter seleção obrigatória se "São Paulo" for a cidade, exemplo prático
-    const saoPaulo = filteredCities.find(city => city.name === "São Paulo");
-    if (saoPaulo) {
-      citySelect.setValue(saoPaulo.id);
-    }
   });
 
   // Se já tiver estado selecionado na página, dispara o carregamento das cidades
