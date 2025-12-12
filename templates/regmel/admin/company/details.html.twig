@@ -155,23 +155,65 @@
                                         {{ anticipation == 'true' ? 'proposal.in_anticipation'|trans : 'proposal.no_anticipation'|trans }}
                                     </span>
                                 </td>
-                                <td>
-                                    <button 
-                                        class="btn btn-outline-info btn-sm"
-                                        data-proposal='{{ {
-                                            id: proposal.id,
-                                            name: proposal.name,
-                                            created_at: proposal.createdAt|date('d/m/Y'),
-                                            created_by: proposal.createdBy.name,
-                                            company: proposal.organizationFrom.name,
-                                            area_option: env.aurora.proposals.area_characteristics[proposal.extraFields.area_characteristic] ?? '',
-                                            price_per_house: env.aurora.variables.price_per_household ?? 1,
-                                            ...proposal.extraFields
-                                        }|json_encode|e('html_attr') }}'
-                                        onClick="modalProposalDetails(this)"
-                                    >
-                                        Ver Proposta
-                                    </button>
+                                <td style="position: relative;">
+                                    <div class="dropdown">
+                                        <button
+                                            class="btn btn-outline-warning btn-sm dropdown-toggle"
+                                            type="button"
+                                            id="dropdownMenu{{ proposal.id }}"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false"
+                                            style="--bs-dropdown-min-width: 0; width: auto;"
+                                        >
+                                            {{ 'actions'|trans }}
+                                        </button>
+                                        <ul
+                                            class="dropdown-menu dropdown-menu-end"
+                                            aria-labelledby="dropdownMenu{{ proposal.id }}"
+                                            style="--bs-dropdown-min-width: 0; width: auto;"
+                                        >
+                                            <li>
+                                                <a
+                                                    href="#"
+                                                    class="dropdown-item"
+                                                    onclick="modalProposalDetails(this)"
+                                                    data-proposal='{{ {
+                                                        id: proposal.id,
+                                                        name: proposal.name,
+                                                        created_at: proposal.createdAt|date('d/m/Y'),
+                                                        created_by: proposal.createdBy.name,
+                                                        company: proposal.organizationFrom.name,
+                                                        area_option: env.aurora.proposals.area_characteristics[proposal.extraFields.area_characteristic] ?? '',
+                                                        price_per_house: env.aurora.variables.price_per_household ?? 1,
+                                                        ...proposal.extraFields
+                                                    }|json_encode|e('html_attr') }}'
+                                                >
+                                                    Ver Proposta
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a
+                                                    href="#"
+                                                    class="dropdown-item"
+                                                    onclick="openProposalStatusModal('{{ proposal.id }}')"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#modalProposalStatus"
+                                                >
+                                                    Atualizar Status
+                                                </a>
+                                            </li>
+                                            {% if proposal.extraFields.anticipation == 'true' %}
+                                                <li>
+                                                    <a
+                                                        href="{{ path('admin_regmel_proposal_anticipation_files_download', {'id': proposal.id}) }}"
+                                                        class="dropdown-item"
+                                                    >
+                                                        Baixar documentos de antecipação
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -256,20 +298,41 @@
             </div>
         </div>
     </section>
-    <div class="modal fade" id="memberDetailsModal" tabindex="-1" aria-labelledby="memberDetailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+
+    {# Modal: Atualizar status da proposta #}
+    <div class="modal fade" id="modalProposalStatus" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="memberDetailsModalLabel">{{ 'member_details' | trans }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                    <div id="member-details-content">
+                <form id="proposalStatusForm" method="post">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Atualizar status da proposta</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'close' | trans }}</button>
-                </div>
+                    <div class="modal-body">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Status *</label>
+                            <select class="form-select" name="status" required>
+                                <option value="" selected disabled>Selecione o status</option>
+                                <option value="Anuída">Anuída</option>
+                                <option value="Não Anuída">Não Anuída</option>
+                                <option value="Selecionada">Selecionada</option>
+                                <option value="Não Selecionada">Não Selecionada</option>
+                            </select>
+                            <div class="form-text">Selecione uma opção obrigatória</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reasonText" class="form-label fw-bold">Motivo *</label>
+                            <textarea name="reason" id="reasonText" class="form-control" rows="4"
+                                      placeholder="Descreva o motivo da sua decisão..." required></textarea>
+                            <div class="form-text">Mínimo de 20 caracteres</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -284,4 +347,50 @@
     <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
     <script type="module" src="{{ asset('js/grid-init.js') }}"></script>
     <script src="{{ asset('js/modal-proposal-details.js') }}"></script>
+
+    <script>
+        function openProposalStatusModal(proposalId) {
+            const form = document.getElementById('proposalStatusForm');
+            form.action = `/painel/admin/propostas/${proposalId}/status`;
+        }
+
+        // Envia via fetch e recarrega a mesma página ao concluir
+        (function () {
+            const form = document.getElementById('proposalStatusForm');
+            if (!form) return;
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn?.setAttribute('disabled', 'disabled');
+
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    if (!res.ok) {
+                        alert('Não foi possível salvar. Tente novamente.');
+                        submitBtn?.removeAttribute('disabled');
+                        return;
+                    }
+
+                    // Fecha o modal e recarrega a mesma página
+                    const modalEl = document.getElementById('modalProposalStatus');
+                    if (modalEl && window.bootstrap) {
+                        const instance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        instance.hide();
+                    }
+                    window.location.reload();
+                } catch (err) {
+                    console.error(err);
+                    alert('Ocorreu um erro inesperado.');
+                    submitBtn?.removeAttribute('disabled');
+                }
+            });
+        })();
+    </script>
 {% endblock %}
