@@ -3,10 +3,32 @@ name: PHP Tests and Linting
 on:
   push:
     branches: [main, feat/*, fix/*]
-  # pull_request:
-  #   branches: [ main ]
+  pull_request:
+    branches: [main]
 
 jobs:
+  runtime:
+    name: PHP Runtime Requirements
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: ctype, fileinfo, gd, iconv, mongodb, sodium, pdo_pgsql, intl, opcache, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Check PHP and extension requirements
+        run: composer check-platform-reqs --lock --no-dev
+
   lint:
     if: false
     name: Code Style & Linting
