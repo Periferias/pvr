@@ -11,6 +11,10 @@ FROM dunglas/frankenphp:1-php8.4 AS frankenphp_upstream
 # Base FrankenPHP image
 FROM frankenphp_upstream AS frankenphp_base
 
+# Require the PHP security fixes for CVE-2026-109618 and CVE-2026-109619.
+RUN php -r 'if (PHP_VERSION_ID < 80427 || (PHP_VERSION_ID >= 80500 && PHP_VERSION_ID < 80512)) { fwrite(STDERR, "PVR requires PHP >=8.4.27, excluding vulnerable PHP 8.5 releases before 8.5.12.\n"); exit(1); }'
+RUN frankenphp version | php -r '$version = stream_get_contents(STDIN); if (!preg_match("/FrankenPHP v([0-9]+\.[0-9]+\.[0-9]+)/", $version, $matches) || version_compare($matches[1], "1.13.4", "<")) { fwrite(STDERR, "PVR requires FrankenPHP >=1.13.4.\n"); exit(1); }'
+
 WORKDIR /app
 
 VOLUME /app/var/

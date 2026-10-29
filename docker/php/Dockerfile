@@ -1,5 +1,8 @@
 FROM php:8.4-fpm
 
+# Require patched PHP while allowing newer releases.
+RUN php -r 'if (PHP_VERSION_ID < 80427 || (PHP_VERSION_ID >= 80500 && PHP_VERSION_ID < 80512)) { fwrite(STDERR, "PVR requires PHP >=8.4.27, excluding vulnerable PHP 8.5 releases before 8.5.12.\n"); exit(1); }'
+
 WORKDIR /var/www
 
 RUN rm -rf /var/www/html && apt-get update && apt-get install -y \
