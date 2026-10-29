@@ -25,11 +25,16 @@ O projeto ainda está em desenvolvimento e as próximas atualizações serão vo
 Antes de começar, verifique se você atendeu aos seguintes requisitos:
 
 - Docker e Docker Compose instalados (para desenvolvimento local)
+- PHP 8.4.27 ou superior, excluindo PHP 8.5.0 a 8.5.11 (exigido pelo Composer)
 - kubectl e Helm (para ambientes Kubernetes)
 - Skaffold (para desenvolvimento com Kubernetes)
 - Acesso ao cluster Kubernetes (para staging/produção)
 - Credenciais AWS configuradas (para staging)
 - Acesso ao repositório ECR da AWS
+
+As imagens `php:8.4-fpm` (local) e `dunglas/frankenphp:1-php8.4` (produção) acompanham as atualizações da linha PHP 8.4. Os builds exigem PHP >=8.4.27 e produção também exige FrankenPHP >=1.13.4, versões que incluem as correções de segurança do PHP de [21/10/2026](https://www.php.net/archive/2026.php#2026-10-21-5) e do [FrankenPHP 1.13.4](https://github.com/php/frankenphp/releases/tag/v1.13.4). O Composer permite versões posteriores do PHP, mas exclui 8.5.0 a 8.5.11 porque também são vulneráveis.
+
+Para atualizar o ambiente local, execute `docker compose build --pull php` e `docker compose up -d php`. Em staging e produção, reconstrua e publique a imagem e atualize o deployment; confirme o campo `php.version` de `/api/info` após a atualização. As duas configurações PHP também desativam `session.upload_progress.enabled`, conforme o aviso complementar do PHP de 23/10/2026.
 
 ## 🚀 Instalação e Configuração
 
